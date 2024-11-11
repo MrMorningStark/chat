@@ -40,8 +40,9 @@ const ChatRoom = () => {
 
     useEffect(() => {
         loadMessages();
+        const roomId = [user.sid, sid].sort().join('_');
         const socket = connectSocket(user.sid);
-        socket.emit('joinRoom', `chat_${sid}`);
+        socket.emit('joinRoom', `chat_${roomId}`);
 
         socket.on('receiveMessage', (message) => {
             setMessages((prev) => [...prev, message]);

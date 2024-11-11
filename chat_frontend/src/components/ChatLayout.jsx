@@ -34,9 +34,10 @@ const ChatLayout = () => {
             });
             setRefresh(!refresh);
         } catch (error) {
+            console.log(error);
             toast({
                 title: "Error",
-                description: "Failed to add friend",
+                description: error.status === 400 ? error.response.data.message : "Something went wrong",
                 status: "error",
                 duration: 3000,
                 isClosable: true,
