@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { connectSocket, getSocket } from '../services/socket';
+import { getSocket } from '../services/socket';
 import moment from 'moment';
 import {
     Box,
@@ -26,8 +26,10 @@ const ChatRoom = () => {
     const [newMessage, setNewMessage] = useState('');
     const [friend, setFriend] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isOnline, setIsOnline] = useState('offline');
     const { user } = useSelector((state) => state.auth);
     const messagesEndRef = useRef(null);
+    const room = useRef(null);
     const isMobile = useBreakpointValue({ base: true, lg: false });
 
     // Color mode values
@@ -39,37 +41,70 @@ const ChatRoom = () => {
     const inputBg = useColorModeValue('white', 'gray.700');
 
     useEffect(() => {
+        room.current = `chat_${[user.sid, sid].sort().join('_')}`;
+        loadFriend();
         loadMessages();
-        const roomId = [user.sid, sid].sort().join('_');
-        const socket = connectSocket(user.sid);
-        socket.emit('joinRoom', `chat_${roomId}`);
+        loadUserStatus();
+        const socket = getSocket(user.sid);
+        socket.emit('joinRoom', room.current);
 
         socket.on('receiveMessage', (message) => {
             setMessages((prev) => [...prev, message]);
         });
 
+        socket.on('userStatus', (data) => {
+            let { sid, status } = data;
+            if (sid != user.sid) {
+                setIsOnline(status);
+            }
+        });
+
         return () => {
-            socket.disconnect();
+            socket.emit('leaveRoom', room.current);
         };
     }, [sid]);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (instant = false) => {
+        messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'instant' : 'smooth' });
     };
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
+    const loadUserStatus = async () => {
+        try {
+            const response = await api.get(`users/${sid}/status`);
+            if (response.data.status) {
+                setIsOnline(response.data.status);
+            }
+        } catch (error) {
+            console.error('Error loading user status:', error);
+        }
+    }
+
+
+    const loadFriend = async () => {
+        try {
+            const response = await api.post(`friends/friend`, { sid });
+            if (!response.data.friend) {
+                navigate('/chats');
+            }
+            setFriend(response.data.friend);
+        } catch (error) {
+            console.error('Error loading friend:', error);
+            navigate('/chats');
+        }
+    }
+
     const loadMessages = async () => {
         try {
             setIsLoading(true);
-            const response = await api.get('chat/history/' + sid);
-            console.log(response);
+            const response = await api.post('chat/history', { room: room.current });
+            console.log(response.data);
             // Handle successful authentication
             if (response.data) {
-                setFriend(response.data.friend);
-                setMessages(response.data.messages);
+                setMessages(response.data.history);
             }
         } catch (error) {
             console.error('Error loading messages:', error);
@@ -83,9 +118,9 @@ const ChatRoom = () => {
 
         const socket = getSocket();
         socket.emit('sendMessage', {
-            room: `chat_${sid}`,
-            sid: user.id,
+            room: room.current,
             text: newMessage,
+            to: sid
         });
 
         setNewMessage('');
@@ -123,8 +158,8 @@ const ChatRoom = () => {
                         />
                         <Box>
                             <Text fontWeight="bold">{friend?.username}</Text>
-                            <Text fontSize="sm" color="green.500">
-                                {/* {friend.status} */}
+                            <Text fontSize="sm" color={isOnline == 'online' ? "green.500" : "red.500"}>
+                                {isOnline}
                             </Text>
                         </Box>
                     </HStack>
@@ -159,23 +194,23 @@ const ChatRoom = () => {
                 {messages.map((message, index) => (
                     <Flex
                         key={index}
-                        justify={message.sid === user.sid ? 'flex-end' : 'flex-start'}
+                        justify={message.sender === user.sid ? 'flex-end' : 'flex-start'}
                     >
                         <Box
                             maxW="70%"
-                            bg={message.sid === user.sid ? userMessageBg : messageBg}
-                            color={message.sid === user.sid ? 'white' : 'inherit'}
+                            bg={message.sender === user.sid ? userMessageBg : messageBg}
+                            color={message.sender === user.sid ? 'white' : 'inherit'}
                             px={4}
                             py={2}
                             borderRadius="lg"
                         >
-                            <Text>{message.text}</Text>
+                            <Text>{message.content}</Text>
                             <Text
                                 fontSize="xs"
                                 opacity={0.8}
                                 mt={1}
                             >
-                                {moment(message.createdAt).format('HH:mm')}
+                                {moment(message.timestamp).format('HH:mm')}
                             </Text>
                         </Box>
                     </Flex>

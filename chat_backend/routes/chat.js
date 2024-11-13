@@ -4,23 +4,18 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 
 // Fetch chat history between two users
-router.get('/history/:recipientSid', async (req, res) => {
-    const { recipientSid } = req.params;
-    const sid = req.sid;
-
+router.post('/history', async (req, res) => {
+    const { room } = req.body;
+    if (!room) {
+        return res.status(400).json({ message: 'room parameter is required' });
+    }
     try {
-        // Fetch messages where the user is either the sender or recipient with the specified recipient
         const messages = await Message.find({
-            $or: [
-                { sender: sid, recipient: recipientSid },
-                { sender: recipientSid, recipient: sid }
-            ]
+            room: room
         }).sort({ timestamp: 1 });  // Sort messages by timestamp in ascending order
-
         // get that friend
-        const friend = await User.findOne({ sid: recipientSid });
 
-        res.status(200).json({ friend, messages });
+        res.status(200).json({ history: messages });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error fetching chat history', error });

@@ -3,10 +3,11 @@ import io from 'socket.io-client';
 let socket;
 
 export const connectSocket = (sid) => {
-    socket = io('http://localhost:5000', {
-        query: { sid }
+    if (socket) return socket;
+    socket = io('http://192.168.0.112:5000', {
+        auth: { sid },
     });
     return socket;
 };
 
-export const getSocket = () => socket;
+export const getSocket = (sid) => socket || connectSocket(sid);

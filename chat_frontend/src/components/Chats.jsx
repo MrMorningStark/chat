@@ -27,6 +27,7 @@ import {
     FiPhone,
 } from 'react-icons/fi';
 import api from '../services/api';
+import { connectSocket } from '../services/socket';
 
 const Chats = ({ refresh }) => {
     const navigate = useNavigate();
@@ -90,6 +91,7 @@ const Chats = ({ refresh }) => {
     ]);
 
     useEffect(() => {
+        connectSocket(user.sid);
         loadFriends();
     }, [refresh]);
 
