@@ -34,6 +34,7 @@ class SocketManager {
     }
 
     handleLeaveRoom(socket, sid, room) {
+        this.io.to(room).emit('userStatus', { sid, status: 'offline' });
         this.room = null;
         socket.leave(room);
         console.log(`User ${sid} left room: ${room}`);

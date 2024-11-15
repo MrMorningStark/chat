@@ -14,7 +14,8 @@ import {
     IconButton,
     HStack,
     VStack,
-    useBreakpointValue
+    useBreakpointValue,
+    useColorMode
 } from '@chakra-ui/react';
 import { FiArrowLeft, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
 import api from '../services/api';
@@ -31,6 +32,7 @@ const ChatRoom = () => {
     const messagesEndRef = useRef(null);
     const room = useRef(null);
     const isMobile = useBreakpointValue({ base: true, lg: false });
+    const { colorMode } = useColorMode();
 
     // Color mode values
     const bg = useColorModeValue('white', 'gray.800');
@@ -190,36 +192,40 @@ const ChatRoom = () => {
                 spacing={4}
                 p={6}
                 alignItems="stretch"
+                bgImage="url('https://www.transparenttextures.com/patterns/inspiration-geometry.png')"
+                bgColor={colorMode === "dark" ? "#1a202c" : "#ffffff"}
             >
-                {messages.map((message, index) => (
-                    <Flex
-                        key={index}
-                        justify={message.sender === user.sid ? 'flex-end' : 'flex-start'}
-                    >
-                        <Box
-                            maxW="70%"
-                            bg={message.sender === user.sid ? userMessageBg : messageBg}
-                            color={message.sender === user.sid ? 'white' : 'inherit'}
-                            px={4}
-                            py={2}
-                            borderRadius="lg"
+                {
+                    messages.map((message, index) => (
+                        <Flex
+                            key={index}
+                            justify={message.sender === user.sid ? 'flex-end' : 'flex-start'}
                         >
-                            <Text>{message.content}</Text>
-                            <Text
-                                fontSize="xs"
-                                opacity={0.8}
-                                mt={1}
+                            <Box
+                                maxW="70%"
+                                bg={message.sender === user.sid ? userMessageBg : messageBg}
+                                color={message.sender === user.sid ? 'white' : 'inherit'}
+                                px={4}
+                                py={2}
+                                borderRadius="lg"
                             >
-                                {moment(message.timestamp).format('HH:mm')}
-                            </Text>
-                        </Box>
-                    </Flex>
-                ))}
-                <div ref={messagesEndRef} />
-            </VStack>
+                                <Text>{message.content}</Text>
+                                <Text
+                                    fontSize="xs"
+                                    opacity={0.8}
+                                    mt={1}
+                                >
+                                    {moment(message.timestamp).format('HH:mm')}
+                                </Text>
+                            </Box>
+                        </Flex>
+                    ))
+                }
+                < div ref={messagesEndRef} />
+            </VStack >
 
             {/* Message Input */}
-            <Box p={4} borderTop="1px" borderColor={borderColor} bg={headerBg}>
+            < Box p={4} borderTop="1px" borderColor={borderColor} bg={headerBg} >
                 <Flex gap={3}>
                     <Input
                         value={newMessage}
@@ -236,8 +242,8 @@ const ChatRoom = () => {
                         Send
                     </Button>
                 </Flex>
-            </Box>
-        </Flex>
+            </Box >
+        </Flex >
     );
 };
 

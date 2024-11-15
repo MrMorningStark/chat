@@ -18,13 +18,16 @@ import {
     InputGroup,
     InputRightElement,
     IconButton,
+    useColorMode,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setCredentials } from '../redux/authSlice';
-import { FaGoogle, FaGithub, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaGoogle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import api from '../services/api';
+import { FiMoon, FiSun } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 const AuthForm = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -40,6 +43,8 @@ const AuthForm = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const toast = useToast();
+
+    const { colorMode, toggleColorMode } = useColorMode();
 
     // Chakra UI color modes
     const bgColor = useColorModeValue('white', 'gray.700');
@@ -173,7 +178,26 @@ const AuthForm = () => {
                     boxShadow="lg"
                     border="1px"
                     borderColor={borderColor}
+                    position="relative"
                 >
+                    <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        onClick={toggleColorMode}
+                    >
+                        <IconButton
+                            variant="ghost"
+                            icon={colorMode === 'light' ? <FiMoon /> : <FiSun />}
+                            color={colorMode === 'light' ? 'gray.500' : 'yellow.500'}
+                            aria-label={colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+                            title={colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+                            size="lg"
+                            position="absolute"
+                            top={2}
+                            right={2}
+                        />
+                    </motion.span>
                     <VStack spacing={8}>
                         {/* Header */}
                         <VStack spacing={2} w="full">
@@ -195,14 +219,6 @@ const AuthForm = () => {
                                     onClick={() => handleSocialAuth('google')}
                                 >
                                     Google
-                                </Button>
-                                <Button
-                                    w="full"
-                                    variant="outline"
-                                    leftIcon={<Icon as={FaGithub} />}
-                                    onClick={() => handleSocialAuth('github')}
-                                >
-                                    GitHub
                                 </Button>
                             </HStack>
 

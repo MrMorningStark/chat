@@ -5,8 +5,8 @@ import { store } from './redux/store';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import ChatRoom from './components/ChatRoom';
-import ChatLayout from './components/ChatLayout';
 import WelcomeScreen from './components/WelcomeScreen';
+import Home from './components/Home';
 
 const App = () => {
   return (
@@ -19,7 +19,7 @@ const App = () => {
               path="/chats"
               element={
                 <ProtectedRoute>
-                  <ChatLayout />
+                  <Home />
                 </ProtectedRoute>
               }
             >

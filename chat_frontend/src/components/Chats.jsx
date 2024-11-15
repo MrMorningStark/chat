@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     Box,
     Flex,
@@ -17,6 +17,8 @@ import {
     Divider,
     useBreakpointValue,
     Skeleton,
+    Button,
+    useColorMode,
 } from '@chakra-ui/react';
 import {
     FiSearch,
@@ -25,14 +27,21 @@ import {
     FiMessageCircle,
     FiUsers,
     FiPhone,
+    FiMoon,
+    FiSun,
+    FiLogOut,
 } from 'react-icons/fi';
 import api from '../services/api';
 import { connectSocket } from '../services/socket';
+import { FaSearch } from 'react-icons/fa';
+import { logout } from '../redux/authSlice';
 
-const Chats = ({ refresh }) => {
+const Chats = ({ refresh, setIsSearchOpen }) => {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const [searchQuery, setSearchQuery] = useState('');
+    const { colorMode, toggleColorMode } = useColorMode();
+    const dispatch = useDispatch();
 
     // Color mode values
     const bg = useColorModeValue('white', 'gray.800');
@@ -120,7 +129,7 @@ const Chats = ({ refresh }) => {
     ];
 
     return (
-        <Box h="100vh" bg={bg} pt={"65px"}>
+        <Box h="100vh" bg={bg}>
             <Flex h="full">
                 {/* Sidebar */}
                 <Box
@@ -136,26 +145,56 @@ const Chats = ({ refresh }) => {
                     <Box p={4} borderBottom="1px" borderColor={borderColor}>
                         <Flex justify="space-between" align="center" mb={4}>
                             <HStack spacing={3}>
-                                <Avatar size="sm" src={user.avatar} name={user.username} title={user.username} />
+                                <Avatar size="md" src={user.avatar} name={user.username} title={user.username} />
                                 <Text fontSize="xl" fontWeight="bold" color={textColor}>
-                                    Messages
+                                    {user.username.length > 16 ? `${user.username.slice(0, 16)}...` : user.username}
                                 </Text>
                             </HStack>
                             <HStack spacing={2}>
-                                <IconButton
+                                {/* dark mode light mode toggle */}
+                                < IconButton
                                     variant="ghost"
-                                    icon={<FiEdit />}
-                                    aria-label="New Message"
+                                    icon={colorMode === 'light' ?
+                                        <FiMoon />
+                                        : <FiSun />
+                                    }
+                                    color={colorMode === 'light' ? 'gray.500' : 'yellow.500'}
+                                    aria-label={colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+                                    title={colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
                                     size="sm"
+                                    onClick={toggleColorMode}
                                 />
                                 <IconButton
                                     variant="ghost"
                                     icon={<FiSettings />}
                                     aria-label="Settings"
+                                    title="Settings"
                                     size="sm"
+                                />
+                                <IconButton
+                                    variant="ghost"
+                                    icon={<FiLogOut />}
+                                    color={'red.500'}
+                                    aria-label="Logout"
+                                    title="Logout"
+                                    size="sm"
+                                    _hover={{ bg: "red.100" }}
+                                    _active={{ bg: "red.200" }}
+                                    onClick={() => dispatch(logout())}
                                 />
                             </HStack>
                         </Flex>
+                        {/* Find New Friends */}
+                        <Button
+                            leftIcon={<FaSearch className="w-4 h-4" />}
+                            onClick={() => setIsSearchOpen(true)}
+                            variant="outline"
+                            w="full"
+                            mb={4}
+                        >
+                            Find New Friends
+                        </Button>
+                        {/* Search Messages */}
                         <InputGroup>
                             <InputLeftElement pointerEvents="none">
                                 <FiSearch color="gray.400" />

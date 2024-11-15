@@ -1,7 +1,9 @@
-import { Box, VStack, Text, Button, Flex, useColorModeValue } from '@chakra-ui/react';
+import { Box, VStack, Text, Button, Flex, useColorModeValue, useColorMode } from '@chakra-ui/react';
 import { FiMessageCircle, FiEdit } from 'react-icons/fi';
 
 const WelcomeScreen = () => {
+    const { colorMode } = useColorMode();
+
     const welcomeBg = useColorModeValue('gray.50', 'gray.900');
     const welcomeIconBg = useColorModeValue('blue.50', 'blue.900');
     const textColor = useColorModeValue('gray.800', 'white');
@@ -14,6 +16,8 @@ const WelcomeScreen = () => {
             justify="center"
             align="center"
             h="full"
+            bgImage="url('https://www.transparenttextures.com/patterns/hexellence.png')"
+            bgColor={colorMode === "dark" ? "#1a202c" : "#ffffff"}
         >
             <VStack spacing={4}>
                 <Box

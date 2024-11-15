@@ -5,7 +5,7 @@ import Chats from './Chats';
 import { FaSearch, FaUserPlus } from 'react-icons/fa';
 import api from '../services/api';
 
-const ChatLayout = () => {
+const Home = () => {
     const { sid } = useParams();
     const toast = useToast();
     const isMobile = useBreakpointValue({ base: true, lg: false });
@@ -76,19 +76,8 @@ const ChatLayout = () => {
                     w={{ base: "full", lg: "400px" }}
                     borderRight="1px"
                     borderColor="gray.200"
-                    position={"relative"}
                 >
-                    <Flex position={'absolute'} top={0} w={"full"} p="4" borderBottom="1px" borderColor="gray.200" >
-                        <Button
-                            leftIcon={<FaSearch className="w-4 h-4" />}
-                            onClick={() => setIsSearchOpen(true)}
-                            variant="outline"
-                            w="full"
-                        >
-                            Find New Friends
-                        </Button>
-                    </Flex>
-                    <Chats refresh={refresh} />
+                    <Chats refresh={refresh} setIsSearchOpen={setIsSearchOpen} />
                 </Box>
             )}
 
@@ -156,4 +145,4 @@ const ChatLayout = () => {
     );
 };
 
-export default ChatLayout;
+export default Home;
