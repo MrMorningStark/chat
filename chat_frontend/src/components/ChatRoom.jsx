@@ -66,8 +66,8 @@ const ChatRoom = () => {
         };
     }, [sid]);
 
-    const scrollToBottom = (instant = false) => {
-        messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'instant' : 'smooth' });
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => {
@@ -145,14 +145,12 @@ const ChatRoom = () => {
             >
                 <Flex justify="space-between" align="center">
                     <HStack spacing={4}>
-                        {isMobile && (
-                            <IconButton
-                                icon={<FiArrowLeft />}
-                                variant="ghost"
-                                onClick={() => navigate('/chats')}
-                                aria-label="Back to chats"
-                            />
-                        )}
+                        <IconButton
+                            icon={<FiArrowLeft />}
+                            variant="ghost"
+                            onClick={() => navigate('/chats')}
+                            aria-label="Back to chats"
+                        />
                         <Avatar
                             size="md"
                             src={friend?.avatar}

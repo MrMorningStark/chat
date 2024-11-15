@@ -16,7 +16,7 @@ const WelcomeScreen = () => {
             justify="center"
             align="center"
             h="full"
-            bgImage="url('https://www.transparenttextures.com/patterns/hexellence.png')"
+            bgImage="url('https://www.transparenttextures.com/patterns/gplay.png')"
             bgColor={colorMode === "dark" ? "#1a202c" : "#ffffff"}
         >
             <VStack spacing={4}>

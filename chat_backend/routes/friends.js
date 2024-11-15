@@ -3,6 +3,7 @@ const router = express.Router();
 const FriendRequest = require('../models/FriendRequest');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware'); // Middleware to protect routes
+const Message = require('../models/Message');
 
 // Send Friend Request
 router.post('/send-request', authMiddleware, async (req, res) => {
@@ -71,10 +72,39 @@ router.post('/decline-request', authMiddleware, async (req, res) => {
 // Get Friend List
 router.get('/list', authMiddleware, async (req, res) => {
     try {
+        // Step 1: Find the user and populate friends list excluding password
         const user = await User.findById(req.userId).populate('friends', '-password');
-        res.status(200).json({ friends: user.friends });
+
+        // Step 2: For each friend, fetch the last message from the Message collection
+        const friendsWithLastMessage = [];
+
+        for (const friend of user.friends) {
+            // Fetch last message between the user and friend
+            let room = `chat_${[req.sid, friend.sid].sort().join('_')}`
+            const lastMessage = await Message.findOne({
+                room: room
+            }).sort({ timestamp: -1 }).limit(1);  // Sort to get the most recent message
+
+            // Add the friend and the last message to the list
+            friendsWithLastMessage.push({
+                ...friend._doc,
+                lastMessage: lastMessage || null // If no message found, set null
+            });
+        }
+
+        // Step 3: Sort the friends by the timestamp of the last message in descending order (most recent first)
+        friendsWithLastMessage.sort((a, b) => {
+            const timestampA = a.lastMessage ? a.lastMessage.timestamp : 0;
+            const timestampB = b.lastMessage ? b.lastMessage.timestamp : 0;
+            return timestampB - timestampA;  // Compare timestamps to sort in descending order
+        });
+
+        // Step 4: Return the sorted list of friends with their last message
+        res.status(200).json({
+            friends: friendsWithLastMessage
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching friends list', error });
+        res.status(500).json({ message: 'Error fetching friends list. ' + error.message, error });
     }
 });
 

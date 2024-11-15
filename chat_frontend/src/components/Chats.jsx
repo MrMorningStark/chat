@@ -277,23 +277,27 @@ const Chats = ({ refresh, setIsSearchOpen }) => {
                                                 </Text>
                                             </Flex>
                                             <Flex justify="space-between" align="center">
-                                                {/* <Text
+                                                <Text
                                                     fontSize="sm"
-                                                    color={friend.isTyping ? 'blue.500' : secondaryTextColor}
+                                                    color={secondaryTextColor}
                                                     noOfLines={1}
                                                 >
-                                                    {friend.isTyping ? 'typing...' : friend.lastMessage}
-                                                </Text> */}
-                                                {/* {friend.unreadCount > 0 && (
-                                                    <Badge
-                                                        colorScheme="blue"
-                                                        borderRadius="full"
-                                                        px={2}
-                                                        ml={2}
-                                                    >
-                                                        {friend.unreadCount}
-                                                    </Badge>
-                                                )} */}
+                                                    {
+                                                        friend.lastMessage.sender === user.sid ? 'You: ' : ''
+                                                    }
+                                                    {friend.lastMessage.content ?? 'Hi'}
+                                                </Text>
+                                                {/* {friend.unreadCount > 0 && ( */}
+                                                {/* <Badge
+                                                    colorScheme="blue"
+                                                    borderRadius="full"
+                                                    px={2}
+                                                    ml={2}
+                                                >
+                                                    2 */}
+                                                    {/* {friend.unreadCount} */}
+                                                {/* </Badge> */}
+                                                {/* )} */}
                                             </Flex>
                                         </Box>
                                     </HStack>

@@ -8,6 +8,7 @@ module.exports = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (!decoded) return res.status(401).json({ error: 'Unauthorized' });
         req.userId = decoded.userId;
+        req.sid = decoded.sid;
         next();
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });
