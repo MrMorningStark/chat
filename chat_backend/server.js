@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const https = require('https');
+const http = require('http');
 const socketIo = require('socket.io');
 
 const connectDB = require('./config/database');
@@ -12,7 +12,7 @@ const authMiddleware = require('./middleware/authMiddleware');
 class Server {
     constructor() {
         this.app = express();
-        this.server = https.createServer(this.app);
+        this.server = http.createServer(this.app);
         this.io = socketIo(this.server, {
             cors: { origin: '*' }
         });
