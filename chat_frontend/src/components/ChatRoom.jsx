@@ -15,10 +15,16 @@ import {
     HStack,
     VStack,
     useBreakpointValue,
-    useColorMode
+    useColorMode,
+    Alert,
+    AlertIcon,
+    AlertTitle,
+    AlertDescription,
+    ButtonGroup
 } from '@chakra-ui/react';
 import { FiArrowLeft, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
 import api from '../services/api';
+import { useWebRTC } from '../hooks/useWebRTC';
 
 const ChatRoom = () => {
     const { sid } = useParams();
@@ -41,6 +47,18 @@ const ChatRoom = () => {
     const messageBg = useColorModeValue('gray.100', 'gray.700');
     const userMessageBg = useColorModeValue('blue.500', 'blue.600');
     const inputBg = useColorModeValue('white', 'gray.700');
+
+    const {
+        callAccepted,
+        callEnded,
+        stream,
+        incomingCall,
+        myAudio,
+        userAudio,
+        callUser,
+        answerCall,
+        endCall
+    } = useWebRTC(user.sid);
 
     useEffect(() => {
         room.current = `chat_${[user.sid, sid].sort().join('_')}`;
@@ -128,6 +146,79 @@ const ChatRoom = () => {
         setNewMessage('');
     };
 
+    const renderCallButtons = () => (
+        <HStack spacing={2}>
+            {!callAccepted && !callEnded ? (
+                <IconButton
+                    icon={<FiPhone />}
+                    variant="ghost"
+                    aria-label="Voice call"
+                    onClick={() => {
+                        console.log('Initiating call to:', sid);
+                        callUser(sid);
+                    }}
+                />
+            ) : (
+                <IconButton
+                    icon={<FiPhone color="red" />}
+                    variant="ghost"
+                    aria-label="End call"
+                    onClick={() => {
+                        console.log('Ending call');
+                        endCall();
+                    }}
+                />
+            )}
+            <IconButton
+                icon={<FiVideo />}
+                variant="ghost"
+                aria-label="Video call"
+            />
+            <IconButton
+                icon={<FiMoreVertical />}
+                variant="ghost"
+                aria-label="More options"
+            />
+        </HStack>
+    );
+
+    const renderCallAlert = () => {
+        console.log('Rendering call alert:', { incomingCall, callAccepted });
+        return (
+            incomingCall && !callAccepted && (
+                <Alert status="info" position="fixed" top={4} right={4} width="auto" zIndex={10}>
+                    <AlertIcon />
+                    <Box flex="1">
+                        <AlertTitle>Incoming Call</AlertTitle>
+                        <AlertDescription>
+                            {friend?.username} is calling...
+                        </AlertDescription>
+                    </Box>
+                    <ButtonGroup spacing={4}>
+                        <Button
+                            colorScheme="green"
+                            onClick={() => {
+                                console.log('Answering call from:', incomingCall.from);
+                                answerCall();
+                            }}
+                        >
+                            Answer
+                        </Button>
+                        <Button
+                            colorScheme="red"
+                            onClick={() => {
+                                console.log('Declining call');
+                                endCall();
+                            }}
+                        >
+                            Decline
+                        </Button>
+                    </ButtonGroup>
+                </Alert>
+            )
+        );
+    };
+
     return (
         isLoading ? <Flex justify="center" align="center" h="100vh">Loading...</Flex> : <Flex
             direction="column"
@@ -135,6 +226,9 @@ const ChatRoom = () => {
             bg={bg}
             flex="1"
         >
+            <audio ref={myAudio} autoPlay muted onLoadedMetadata={() => console.log('Local audio ready')} />
+            <audio ref={userAudio} autoPlay onLoadedMetadata={() => console.log('Remote audio ready')} />
+            {renderCallAlert()}
             {/* Chat Header */}
             <Box
                 py={4}
@@ -163,23 +257,7 @@ const ChatRoom = () => {
                             </Text>
                         </Box>
                     </HStack>
-                    <HStack spacing={2}>
-                        <IconButton
-                            icon={<FiPhone />}
-                            variant="ghost"
-                            aria-label="Voice call"
-                        />
-                        <IconButton
-                            icon={<FiVideo />}
-                            variant="ghost"
-                            aria-label="Video call"
-                        />
-                        <IconButton
-                            icon={<FiMoreVertical />}
-                            variant="ghost"
-                            aria-label="More options"
-                        />
-                    </HStack>
+                    {renderCallButtons()}
                 </Flex>
             </Box>
 
