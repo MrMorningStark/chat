@@ -2,10 +2,7 @@ const redis = require('redis');
 
 const connectRedis = async () => {
     const client = redis.createClient(
-        {
-            host: process.env.REDIS_HOST,
-            port: process.env.REDIS_PORT,
-        }
+        { url: process.env.REDIS_URL }
     );
     client.on('error', (error) => console.error(`Redis error: ${error}`));
     await client.connect();
