@@ -4,7 +4,7 @@ let socket;
 
 export const connectSocket = (sid) => {
     if (socket) return socket;
-    socket = io('http://192.168.0.112:5000', {
+    socket = io('https://chat-frontend-u72g.onrender.com', {
         auth: { sid },
     });
     return socket;
