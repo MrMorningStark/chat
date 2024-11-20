@@ -283,7 +283,7 @@ const Chats = ({ refresh, setIsSearchOpen }) => {
                                                     noOfLines={1}
                                                 >
                                                     {
-                                                        friend.lastMessage.sender === user.sid ? 'You: ' : ''
+                                                        friend.lastMessage?.sender === user.sid ? 'You: ' : ''
                                                     }
                                                     {friend.lastMessage.content ?? 'Hi'}
                                                 </Text>
@@ -295,7 +295,7 @@ const Chats = ({ refresh, setIsSearchOpen }) => {
                                                     ml={2}
                                                 >
                                                     2 */}
-                                                    {/* {friend.unreadCount} */}
+                                                {/* {friend.unreadCount} */}
                                                 {/* </Badge> */}
                                                 {/* )} */}
                                             </Flex>
