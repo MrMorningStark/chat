@@ -285,7 +285,7 @@ const Chats = ({ refresh, setIsSearchOpen }) => {
                                                     {
                                                         friend.lastMessage?.sender === user.sid ? 'You: ' : ''
                                                     }
-                                                    {friend.lastMessage.content ?? 'Hi'}
+                                                    {friend.lastMessage?.content ?? 'Hi'}
                                                 </Text>
                                                 {/* {friend.unreadCount > 0 && ( */}
                                                 {/* <Badge
