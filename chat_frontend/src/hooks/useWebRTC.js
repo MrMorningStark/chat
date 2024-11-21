@@ -12,6 +12,7 @@ export const useWebRTC = (myId) => {
     const userAudio = useRef();
     const connectionRef = useRef();
     const socketRef = useRef();
+    const callAcceptedByRef = useRef(null);
 
     useEffect(() => {
         const socket = getSocket(myId);
@@ -19,17 +20,18 @@ export const useWebRTC = (myId) => {
         console.log('Socket initialized for user:', myId);
 
         // Incoming call handler
-        socketRef.current.on('incomingCall', ({ from, signal }) => {
-            if (myId === from) return;
-            console.log('Received incoming call from:', from);
+        socketRef.current.on('incomingCall', ({ by, signal }) => {
+            if (myId === by) return;
+            console.log('Received incoming call from:', by);
             console.log('Signal data:', signal);
-            setIncomingCall({ from, signal });
+            setIncomingCall({ from: by, signal });
         });
 
         // Call accepted handler
         socketRef.current.on('callAccepted', ({ signal, by }) => {
-            if (myId != by) return;
+            if (myId == by) return;
             console.log('Call accepted, received signal:', signal);
+            callAcceptedByRef.current = by;
             if (connectionRef.current) {
                 connectionRef.current.signal(signal);
                 setCallAccepted(true);
@@ -39,7 +41,8 @@ export const useWebRTC = (myId) => {
         });
 
         // Call ended handler
-        socketRef.current.on('callEnded', () => {
+        socketRef.current.on('callEnded', ({ by }) => {
+            if (myId == by) return;
             console.log('Call ended received');
             endCall();
         });
@@ -55,9 +58,9 @@ export const useWebRTC = (myId) => {
         };
     }, [myId]);
 
-    const callUser = useCallback(async (idToCall) => {
+    const callUser = useCallback(async (userToCall) => {
         try {
-            console.log('Attempting to call user:', idToCall);
+            console.log('Attempting to call user:', userToCall);
             const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             console.log('Got media stream:', mediaStream);
             setStream(mediaStream);
@@ -76,9 +79,8 @@ export const useWebRTC = (myId) => {
                 console.log('Generated signal data:', data);
 
                 socketRef.current.emit('callUser', {
-                    userToCall: idToCall,
-                    signalData: data,
-                    from: myId
+                    userToCall: userToCall,
+                    signalData: data
                 });
             });
 
@@ -148,15 +150,29 @@ export const useWebRTC = (myId) => {
                     console.log('Stopping track:', track.kind);
                     track.stop();
                 });
+            } else {
+                console.warn('Stream is null or undefined');
             }
             if (connectionRef.current) {
-                connectionRef.current.destroy();
+                console.log('Destroying connection');
+                connectionRef.current.destroy(); // Clean up the peer connection
+            }
+            else {
+                console.warn('connectionRef.current is null or undefined');
             }
 
+            // Emit "endCall" if callAcceptedByRef is valid
+            if (callAcceptedByRef.current && socketRef.current) {
+                console.log('Emitting endCall to:', callAcceptedByRef.current);
+                socketRef.current.emit('endCall', {
+                    to: callAcceptedByRef.current,
+                });
+            }
             setCallEnded(true);
             setCallAccepted(false);
             setIncomingCall(null);
             setStream(null);
+            callAcceptedByRef.current = null;
             console.log('Call ended successfully');
         } catch (err) {
             console.error('Error in endCall:', err);

@@ -24,28 +24,28 @@ class SocketManager {
         socket.on('leaveRoom', (room) => this.handleLeaveRoom(socket, sid, room));
         socket.on('sendMessage', (data) => this.handleSendMessage(data, sid));
         // WebRTC Signaling events
-        socket.on('callUser', ({ userToCall, signalData, from }) => this.handleCallUser(socket, userToCall, signalData, from));
+        socket.on('callUser', ({ userToCall, signalData, from }) => this.handleCallUser(socket, sid, userToCall, signalData));
         socket.on('answerCall', ({ to, signal }) => this.handleAnswerCall(socket, sid, to, signal));
         socket.on('endCall', ({ to }) => this.handleEndCall(socket, sid, to));
         socket.on('disconnect', () => this.handleDisconnect(socket, sid));
     }
 
-    handleCallUser(socket, userToCall, signalData, from) {
-        let room = `chat_${[userToCall, from].sort().join('_')}`;
-        console.log(`User ${from} is calling user ${userToCall} in room: ${room}`);
-        this.io.to(room).emit('incomingCall', { signal: signalData, from });
+    handleCallUser(socket, sid, userToCall, signalData) {
+        let room = `chat_${[userToCall, sid].sort().join('_')}`;
+        console.log(`User ${sid} is calling user ${userToCall} in room: ${room}`);
+        this.io.to(room).emit('incomingCall', { signal: signalData, by: sid });
     }
 
     handleAnswerCall(socket, sid, to, signal) {
         let room = `chat_${[sid, to].sort().join('_')}`;
         console.log(`User ${to} accepted the call in room: ${room}`);
-        this.io.to(room).emit('callAccepted', { signal, by: to });
+        this.io.to(room).emit('callAccepted', { signal, by: sid });
     }
 
     handleEndCall(socket, sid, to) {
         let room = `chat_${[sid, to].sort().join('_')}`;
         console.log(`User ${to} ended the call in room: ${room}`);
-        this.io.to(room).emit('callEnded');
+        this.io.to(room).emit('callEnded', { by: sid });
     }
 
     handleJoinRoom(socket, sid, room) {

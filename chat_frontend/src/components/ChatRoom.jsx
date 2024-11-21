@@ -148,7 +148,7 @@ const ChatRoom = () => {
 
     const renderCallButtons = () => (
         <HStack spacing={2}>
-            {!callAccepted && !callEnded ? (
+            {!callAccepted ? (
                 <IconButton
                     icon={<FiPhone />}
                     variant="ghost"
