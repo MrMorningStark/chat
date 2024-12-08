@@ -19,33 +19,46 @@ class SocketManager {
         console.log('A user connected:', sid);
 
         await this.redisClient.set(`user:${sid}:status`, 'online');
+        await this.redisClient.set(`user:${sid}:socketId`, socket.id);
 
         socket.on('joinRoom', (room) => this.handleJoinRoom(socket, sid, room));
         socket.on('leaveRoom', (room) => this.handleLeaveRoom(socket, sid, room));
         socket.on('sendMessage', (data) => this.handleSendMessage(data, sid));
         // WebRTC Signaling events
-        socket.on('callUser', ({ userToCall, signalData, from }) => this.handleCallUser(socket, sid, userToCall, signalData));
-        socket.on('answerCall', ({ to, signal }) => this.handleAnswerCall(socket, sid, to, signal));
-        socket.on('endCall', ({ to }) => this.handleEndCall(socket, sid, to));
-        socket.on('disconnect', () => this.handleDisconnect(socket, sid));
+        socket.on('callUser', ({ userToCall, signalData }) => this.handleCallUser(sid, userToCall, signalData));
+        socket.on('answerCall', ({ to, signal }) => this.handleAnswerCall(sid, to, signal));
+        socket.on('onOtherCall', ({ to, message }) => this.handleOnOtherCall(sid, to, message));
+        socket.on('endCall', ({ to }) => this.handleEndCall(sid, to));
+        socket.on('disconnect', () => this.handleDisconnect(sid));
     }
 
-    handleCallUser(socket, sid, userToCall, signalData) {
-        let room = `chat_${[userToCall, sid].sort().join('_')}`;
-        console.log(`User ${sid} is calling user ${userToCall} in room: ${room}`);
-        this.io.to(room).emit('incomingCall', { signal: signalData, by: sid });
+    async handleCallUser(sid, userToCall, signalData) {
+        console.log(`User ${sid} is calling user ${userToCall}`);
+        let userSocket = await this.redisClient.get(`user:${userToCall}:socketId`);
+        this.io.to(userSocket).emit('incomingCall', { signal: signalData, by: sid });
     }
 
-    handleAnswerCall(socket, sid, to, signal) {
-        let room = `chat_${[sid, to].sort().join('_')}`;
-        console.log(`User ${to} accepted the call in room: ${room}`);
-        this.io.to(room).emit('callAccepted', { signal, by: sid });
+    async handleAnswerCall(sid, to, signal) {
+        console.log(`User ${sid} accepted the call`);
+        let userSocket = await this.redisClient.get(`user:${to}:socketId`);
+        this.io.to(userSocket).emit('callAccepted', { signal, by: sid });
     }
 
-    handleEndCall(socket, sid, to) {
-        let room = `chat_${[sid, to].sort().join('_')}`;
-        console.log(`User ${to} ended the call in room: ${room}`);
-        this.io.to(room).emit('callEnded', { by: sid });
+    async handleOnOtherCall(sid, to, message) {
+        const userSocket = await this.redisClient.get(`user:${to}:socketId`);
+        if (userSocket) {
+            this.io.to(userSocket).emit('callRejected', {
+                by: sid,
+                message: message
+            });
+        }
+    }
+
+
+    async handleEndCall(sid, to) {
+        console.log(`User ${to} ended the call`);
+        let userSocket = await this.redisClient.get(`user:${to}:socketId`);
+        this.io.to(userSocket).emit('callEnded', { by: sid });
     }
 
     handleJoinRoom(socket, sid, room) {
@@ -56,7 +69,7 @@ class SocketManager {
     }
 
     handleLeaveRoom(socket, sid, room) {
-        this.io.to(room).emit('userStatus', { sid, status: 'offline' });
+        // this.io.to(room).emit('userStatus', { sid, status: 'offline' });
         this.room = null;
         socket.leave(room);
         console.log(`User ${sid} left room: ${room}`);
@@ -69,8 +82,9 @@ class SocketManager {
         this.io.to(room).emit('receiveMessage', message);
     }
 
-    async handleDisconnect(socket, sid) {
+    async handleDisconnect(sid) {
         await this.redisClient.set(`user:${sid}:status`, 'offline');
+        await this.redisClient.set(`user:${sid}:socketId`, 'null');
         console.log('User disconnected:', sid);
         if (this.room) {
             this.io.to(this.room).emit('userStatus', { sid, status: 'offline' });

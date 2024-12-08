@@ -4,6 +4,8 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ColorModeScript } from '@chakra-ui/react';
+import process from 'process';
+window.process = process;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

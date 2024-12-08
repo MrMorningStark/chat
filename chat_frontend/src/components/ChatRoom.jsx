@@ -14,15 +14,13 @@ import {
     IconButton,
     HStack,
     VStack,
-    useBreakpointValue,
     useColorMode,
     Alert,
-    AlertIcon,
     AlertTitle,
     AlertDescription,
     ButtonGroup
 } from '@chakra-ui/react';
-import { FiArrowLeft, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
+import { FiArrowLeft, FiMoreVertical, FiPhone, FiPhoneCall, FiVideo } from 'react-icons/fi';
 import api from '../services/api';
 import { useWebRTC } from '../hooks/useWebRTC';
 
@@ -37,7 +35,6 @@ const ChatRoom = () => {
     const { user } = useSelector((state) => state.auth);
     const messagesEndRef = useRef(null);
     const room = useRef(null);
-    const isMobile = useBreakpointValue({ base: true, lg: false });
     const { colorMode } = useColorMode();
 
     // Color mode values
@@ -49,15 +46,10 @@ const ChatRoom = () => {
     const inputBg = useColorModeValue('white', 'gray.700');
 
     const {
+        callStarted,
         callAccepted,
-        callEnded,
-        stream,
-        incomingCall,
-        myAudio,
-        userAudio,
         callUser,
-        answerCall,
-        endCall
+        endCall,
     } = useWebRTC(user.sid);
 
     useEffect(() => {
@@ -146,29 +138,20 @@ const ChatRoom = () => {
         setNewMessage('');
     };
 
+
     const renderCallButtons = () => (
         <HStack spacing={2}>
-            {!callAccepted ? (
-                <IconButton
-                    icon={<FiPhone />}
-                    variant="ghost"
-                    aria-label="Voice call"
-                    onClick={() => {
-                        console.log('Initiating call to:', sid);
-                        callUser(sid);
-                    }}
-                />
-            ) : (
-                <IconButton
-                    icon={<FiPhone color="red" />}
-                    variant="ghost"
-                    aria-label="End call"
-                    onClick={() => {
-                        console.log('Ending call');
-                        endCall();
-                    }}
-                />
-            )}
+
+            <IconButton
+                icon={<FiPhone />}
+                variant="ghost"
+                aria-label="Voice call"
+                onClick={() => {
+                    console.log('Initiating call to:', sid);
+                    callUser(sid);
+                }}
+            />
+
             <IconButton
                 icon={<FiVideo />}
                 variant="ghost"
@@ -182,40 +165,76 @@ const ChatRoom = () => {
         </HStack>
     );
 
-    const renderCallAlert = () => {
-        console.log('Rendering call alert:', { incomingCall, callAccepted });
+    const renderCallingAlert = () => {
         return (
-            incomingCall && !callAccepted && (
-                <Alert status="info" position="fixed" top={4} right={4} width="auto" zIndex={10}>
-                    <AlertIcon />
-                    <Box flex="1">
-                        <AlertTitle>Incoming Call</AlertTitle>
-                        <AlertDescription>
-                            {friend?.username} is calling...
-                        </AlertDescription>
-                    </Box>
-                    <ButtonGroup spacing={4}>
-                        <Button
-                            colorScheme="green"
-                            onClick={() => {
-                                console.log('Answering call from:', incomingCall.from);
-                                answerCall();
-                            }}
+            <>
+                {/* Overlay */}
+                <Box
+                    position="fixed"
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
+                    backgroundColor="rgba(0, 0, 0, 0.5)"
+                    backdropFilter="blur(8px)"
+                    zIndex={9}
+                    onClick={(e) => e.preventDefault()}
+                />
+
+                {/* Calling Alert */}
+                <Box
+                    position="fixed"
+                    top="50%"
+                    left="50%"
+                    transform="translate(-50%, -50%)"
+                    zIndex={10}
+                    width="350px"
+                    bg="white"
+                    borderRadius="xl"
+                    boxShadow="2xl"
+                    p={4}
+                    textAlign="center"
+                    backgroundImage={require('../images/ringBg.jpg')}
+                    backgroundRepeat={'no-repeat'}
+                    backgroundSize={'cover'}
+                >
+                    <VStack spacing={10}>
+                        <Box
+                            bg="blue.50"
+                            p={3}
+                            borderRadius="full"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
                         >
-                            Answer
-                        </Button>
+                            <FiPhoneCall size={25} color="#3182ce" />
+                        </Box>
+
+                        <VStack spacing={2}>
+                            <Text fontSize="xl" color="gray.700" fontWeight="bold">Calling</Text>
+                            <Text fontSize="lg" color="gray.500">
+                                {friend?.username || 'Contact'}
+                            </Text>
+                        </VStack>
+
+                        <Text color="gray.400" fontStyle="italic">
+                            Waiting for answer...
+                        </Text>
+
                         <Button
                             colorScheme="red"
+                            size="lg"
+                            width="full"
                             onClick={() => {
-                                console.log('Declining call');
+                                console.log('Cancelling call');
                                 endCall();
                             }}
                         >
-                            Decline
+                            Cancel Call
                         </Button>
-                    </ButtonGroup>
-                </Alert>
-            )
+                    </VStack>
+                </Box>
+            </>
         );
     };
 
@@ -226,9 +245,7 @@ const ChatRoom = () => {
             bg={bg}
             flex="1"
         >
-            <audio ref={myAudio} autoPlay muted onLoadedMetadata={() => console.log('Local audio ready')} />
-            <audio ref={userAudio} autoPlay onLoadedMetadata={() => console.log('Remote audio ready')} />
-            {renderCallAlert()}
+            {callStarted && !callAccepted && renderCallingAlert()}
             {/* Chat Header */}
             <Box
                 py={4}
